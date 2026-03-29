@@ -1,5 +1,7 @@
 # ORBITAL NEXUS™ — Advanced Simulation Engine (Single File)
 
+how to use: python orbital_nexus_sim.py
+
 import random
 from collections import defaultdict
 
