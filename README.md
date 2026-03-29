@@ -1,5 +1,17 @@
 # ORBITAL-NEXUS-
-ORBITAL NEXUS™ Intelligent Memory Control Unit (IMCU) ADVANCE CHIP DESIGN 4TB - “Orbital Nexus is a next-generation memory architecture that acts as the central convergence point for data—stabilizing, optimizing, and scaling performance under extreme computational load.” 
+ORBITAL NEXUS™ Intelligent Memory Control Unit (IMCU) ADVANCE CHIP DESIGN 4TB - “Orbital Nexus is a next-generation memory architecture. 
+Designed By: 
+Jimmy W Moore Copyright (c) 2026
+March 28th 2026 
+10:54 CST 
+This design, architecture, and associated materials are protected as intellectual property and may not be used without explicit written permission.
+
+Estimated Value $15,000,000 USD 
+
+All rights reserved.
+
+This material is proprietary and confidential.  
+Unauthorized copying, distribution, or use is strictly prohibited.
 
 # ORBITAL NEXUS™
 
