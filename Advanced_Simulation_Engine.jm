@@ -1,0 +1,217 @@
+# ORBITAL NEXUS™ — Advanced Simulation Engine (Single File)
+
+import random
+from collections import defaultdict
+
+# -----------------------------
+# CONFIG
+# -----------------------------
+NUM_SCENARIOS = 10000
+STEPS_PER_SCENARIO = 300
+
+P_LIMIT = 120
+H_LIMIT = 120
+I_LIMIT = 40
+
+# -----------------------------
+# SCENARIO
+# -----------------------------
+class Scenario:
+    def __init__(self):
+        self.load = random.choice(["low","medium","high","extreme"])
+        self.pattern = random.choice(["sequential","random","burst"])
+        self.error_rate = random.uniform(0, 0.03)
+        self.data_pattern = random.choice(["constant","incremental","random"])
+
+# -----------------------------
+# REQUEST GENERATOR
+# -----------------------------
+def generate_request(s, step):
+    if s.pattern == "sequential":
+        addr = step % (2**20)
+    else:
+        addr = random.randint(0, 2**20)
+
+    if s.data_pattern == "constant":
+        data = 0xAAAAAAAAAAAAAAAA
+    elif s.data_pattern == "incremental":
+        data = step
+    else:
+        data = random.getrandbits(64)
+
+    return {
+        "addr": addr,
+        "data": data,
+        "write": random.choice([True, False]),
+        "qos": random.randint(0,3),
+        "age": 0,
+        "valid": True
+    }
+
+# -----------------------------
+# FABRIC
+# -----------------------------
+class OrbitalNexusSim:
+    def __init__(self):
+        self.pipeline = [None]*10
+        self.memory = {}
+
+        # global state
+        self.pressure = 0
+        self.heat = 0
+        self.integrity = 100
+
+        # anchors for compression stability
+        self.anchor = 0
+        self.anchor_age = 0
+
+    # ---------- prediction ----------
+    def predict(self):
+        return (
+            self.pressure + 1,
+            self.heat + 1,
+            self.integrity - 1
+        )
+
+    # ---------- step ----------
+    def step(self, req):
+
+        # shift pipeline
+        for i in range(len(self.pipeline)-1, 0, -1):
+            self.pipeline[i] = self.pipeline[i-1]
+        self.pipeline[0] = req
+
+        # ---------- stage 2: latency ----------
+        r = self.pipeline[2]
+        if r:
+            r["age"] += 1
+            r["latency"] = r["age"]*2 + r["qos"]*4
+
+        # ---------- stage 3: tier ----------
+        r = self.pipeline[3]
+        if r:
+            r["is_dram"] = (r["addr"] % 32) < 16
+
+        # ---------- stage 4: compression ----------
+        r = self.pipeline[4]
+        if r:
+            if self.integrity < 50:
+                # safe mode
+                pass
+            else:
+                delta = r["data"] - self.anchor
+                r["data"] = delta
+
+            self.anchor_age += 1
+            if self.anchor_age > 50:
+                self.anchor = r["data"]
+                self.anchor_age = 0
+
+        # ---------- stage 5: ECC ----------
+        r = self.pipeline[5]
+        if r:
+            r["ecc"] = bin(r["data"]).count("1") % 2
+
+        # ---------- stage 6: memory ----------
+        r = self.pipeline[6]
+        if r:
+            if r["write"]:
+                self.memory[r["addr"]] = r["data"]
+            else:
+                r["data"] = self.memory.get(r["addr"], 0)
+
+        # ---------- stage 7: ECC check ----------
+        r = self.pipeline[7]
+        if r:
+            parity = bin(r["data"]).count("1") % 2
+            if parity != r.get("ecc", parity):
+                self.integrity -= 5
+                r["ecc_error"] = True
+            else:
+                self.integrity += 1
+                r["ecc_error"] = False
+
+        # ---------- thermal ----------
+        activity = 1 if req else 0
+        self.heat = (self.heat * 7 + activity) // 8
+
+        # ---------- pressure ----------
+        if req:
+            self.pressure += 1
+        else:
+            self.pressure -= 1
+
+        # ---------- predictive control ----------
+        p_f, h_f, i_f = self.predict()
+
+        if p_f > P_LIMIT or h_f > H_LIMIT or i_f < I_LIMIT:
+            self.pressure -= 2
+            self.heat -= 1
+
+        return self.pipeline[-1]
+
+# -----------------------------
+# METRICS
+# -----------------------------
+class Metrics:
+    def __init__(self):
+        self.ops = 0
+        self.errors = 0
+        self.max_latency = 0
+
+    def update(self, r):
+        if r:
+            self.ops += 1
+            self.max_latency = max(self.max_latency, r.get("latency",0))
+            if r.get("ecc_error"):
+                self.errors += 1
+
+# -----------------------------
+# FAILURE DETECTION
+# -----------------------------
+def detect_failure(sim, metrics):
+    if sim.heat > 200:
+        return "THERMAL"
+    if sim.pressure > 200:
+        return "PRESSURE"
+    if sim.integrity < 20:
+        return "INTEGRITY"
+    if metrics.max_latency > 1000:
+        return "LATENCY"
+    return None
+
+# -----------------------------
+# RUN ENGINE
+# -----------------------------
+def run():
+    failures = defaultdict(int)
+
+    for _ in range(NUM_SCENARIOS):
+        scenario = Scenario()
+        sim = OrbitalNexusSim()
+        metrics = Metrics()
+
+        for step in range(STEPS_PER_SCENARIO):
+            req = generate_request(scenario, step)
+            out = sim.step(req)
+            metrics.update(out)
+
+            f = detect_failure(sim, metrics)
+            if f:
+                failures[f] += 1
+                break
+
+    # report
+    print("\n=== ORBITAL NEXUS SIMULATION REPORT ===")
+    total = sum(failures.values())
+    for k,v in sorted(failures.items(), key=lambda x:-x[1]):
+        print(f"{k}: {v}")
+
+    print(f"\nTotal Failures: {total}")
+    print("======================================")
+
+# -----------------------------
+# ENTRY
+# -----------------------------
+if __name__ == "__main__":
+    run()
