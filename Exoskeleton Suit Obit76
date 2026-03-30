@@ -263,3 +263,230 @@ SECTION 10 — UPGRADE PATH (V2)
 ------------------------------------------------------------
 END OF FILE
 ============================================================
+
+============================================================
+SECTION 19 + 20 + 21 — UNIFIED CONTROL STACK (COPY/PASTE)
+STM32 FIRMWARE + JETSON AI + TORQUE TUNING
+============================================================
+
+PURPOSE:
+This file contains the FULL working control pipeline:
+- Real-time motor control (STM32)
+- Motion detection + command generation (Jetson)
+- Torque tuning methodology (deployment phase)
+
+============================================================
+SECTION 19 — STM32 REAL-TIME CONTROL LOOP (1kHz)
+============================================================
+
+#include <math.h>
+#include <stdbool.h>
+
+// ==== GLOBALS ====
+float target_torque = 0.0f;
+float current_torque = 0.0f;
+float joint_angle = 0.0f;
+float joint_velocity = 0.0f;
+
+float Kp = 2.0f;
+float Kd = 0.1f;
+
+float max_torque = 15.0f;     // SAFE LIMIT (Nm)
+float max_velocity = 5.0f;    // rad/s
+
+bool heartbeat_ok = false;
+uint32_t last_heartbeat_time = 0;
+
+// ==== HARDWARE INTERFACES (IMPLEMENT PER BOARD) ====
+float read_encoder_angle();
+float read_encoder_velocity();
+float read_current();
+void motor_set_torque(float torque);
+uint32_t millis();
+bool jetson_heartbeat_received();
+float get_jetson_command();
+
+// ==== MAIN CONTROL LOOP (RUN AT 1kHz) ====
+void control_loop() {
+
+    // --- HEARTBEAT CHECK ---
+    if (jetson_heartbeat_received()) {
+        heartbeat_ok = true;
+        last_heartbeat_time = millis();
+    }
+
+    if (millis() - last_heartbeat_time > 200) {
+        heartbeat_ok = false;
+        motor_set_torque(0);
+        return;
+    }
+
+    // --- SENSOR READ ---
+    joint_angle = read_encoder_angle();
+    joint_velocity = read_encoder_velocity();
+    current_torque = read_current();
+
+    // --- COMMAND INPUT ---
+    float desired_torque = get_jetson_command();
+
+    // --- SAFETY LIMITS ---
+    if (fabs(joint_velocity) > max_velocity) {
+        desired_torque = 0;
+    }
+
+    if (desired_torque > max_torque) {
+        desired_torque = max_torque;
+    }
+    if (desired_torque < -max_torque) {
+        desired_torque = -max_torque;
+    }
+
+    // --- PD CONTROL ---
+    float error = desired_torque - current_torque;
+    float control_output = (Kp * error) - (Kd * joint_velocity);
+
+    // --- APPLY OUTPUT ---
+    motor_set_torque(control_output);
+}
+
+============================================================
+SECTION 20 — JETSON MOTION DETECTION + COMMAND (50Hz)
+============================================================
+
+import time
+import serial
+import math
+
+# SERIAL CONNECTION TO STM32
+ser = serial.Serial('/dev/ttyUSB0', 115200)
+
+# ==== IMU PLACEHOLDER (REPLACE WITH REAL SENSOR) ====
+def read_imu():
+    angle = 0.0
+    velocity = 0.0
+    return angle, velocity
+
+# ==== MOTION DETECTION ====
+def detect_motion(angle, velocity):
+    if velocity > 0.5:
+        return "EXTENSION"
+    elif velocity < -0.5:
+        return "FLEXION"
+    else:
+        return "IDLE"
+
+# ==== TORQUE GENERATION ====
+def compute_torque(state, velocity):
+    if state == "EXTENSION":
+        return min(10.0, velocity * 5.0)
+    elif state == "FLEXION":
+        return -min(8.0, abs(velocity * 4.0))
+    else:
+        return 0.0
+
+# ==== COMMUNICATION ====
+def send_command(torque):
+    msg = f"{torque:.2f}\n"
+    ser.write(msg.encode())
+
+def send_heartbeat():
+    ser.write(b"H\n")
+
+# ==== MAIN LOOP (50Hz) ====
+while True:
+    angle, velocity = read_imu()
+
+    state = detect_motion(angle, velocity)
+    torque = compute_torque(state, velocity)
+
+    send_command(torque)
+    send_heartbeat()
+
+    time.sleep(0.02)
+
+============================================================
+SECTION 21 — TORQUE TUNING STRATEGY (DEPLOYMENT)
+============================================================
+
+PHASE 1 — ZERO ASSIST
+--------------------------------
+SET:
+- max_torque = 2 Nm
+
+GOAL:
+- System produces no noticeable force
+- Validate stability only
+
+--------------------------------
+PHASE 2 — LIGHT ASSIST
+--------------------------------
+INCREMENT:
+- 2 → 5 → 8 Nm
+
+TUNE:
+- Increase Kp → responsiveness
+- Increase Kd → smoothness (removes jerk)
+
+--------------------------------
+PHASE 3 — INTENT MATCHING
+--------------------------------
+GOAL:
+- Assist begins exactly when user initiates motion
+
+ADJUST:
+- Velocity thresholds (Jetson)
+- Reduce delay between detection and torque
+
+--------------------------------
+PHASE 4 — REGEN TUNING
+--------------------------------
+WHEN braking (negative velocity):
+- Apply small negative torque
+
+RULE:
+- Must feel natural
+- Never resist user strongly
+
+--------------------------------
+PHASE 5 — MAX SAFE LIMIT
+--------------------------------
+SET HARD CAP:
+- 10–15 Nm (V1 safe range)
+
+DO NOT EXCEED until:
+- Full system stability verified
+
+--------------------------------
+CONTROL FEEL TARGET
+--------------------------------
+SUCCESS FEELS LIKE:
+- “My leg, but stronger”
+
+FAILURE FEELS LIKE:
+- “Something is pushing/pulling me”
+
+--------------------------------
+TUNING ERROR DIAGNOSIS
+--------------------------------
+Jerky motion:
+→ Kd too low
+
+Lag:
+→ Kp too low
+
+Oscillation:
+→ Kp too high
+
+Resistance feeling:
+→ Torque too high
+
+--------------------------------
+FINAL RULE
+--------------------------------
+SYSTEM MUST:
+- Assist motion
+- NEVER override user intent
+
+============================================================
+END OF CONTROL STACK FILE
+============================================================
