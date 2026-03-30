@@ -1,0 +1,265 @@
+============================================================
+PROJECT: HYBRID EXOSUIT V1 (BUILDABLE PROTOTYPE)
+FILE: COMPLETE BUILD SPEC + WIRING + ASSEMBLY
+============================================================
+
+WARNING:
+This is a high-energy electromechanical system. Improper assembly can
+cause injury, fire, or catastrophic failure. Do NOT spin a flywheel
+until containment + control systems are validated.
+
+------------------------------------------------------------
+SECTION 1 — SYSTEM OVERVIEW
+------------------------------------------------------------
+
+Goal:
+Build a wearable test platform with:
+- Distributed battery power
+- 1-joint assist (knee)
+- Motion energy recovery
+- Microfluidic cooling loop
+- Central compute (Jetson)
+- Real-time control (FPGA or MCU for V1)
+
+NO flight. NO full-body actuation.
+
+------------------------------------------------------------
+SECTION 2 — BILL OF MATERIALS (V1)
+------------------------------------------------------------
+
+COMPUTE
+- NVIDIA Jetson Orin Nano Developer Kit
+- 128GB NVMe SSD
+- 5V/4A regulated supply (for Jetson)
+
+CONTROL
+- STM32 Nucleo board (V1 instead of FPGA for simplicity)
+- CAN or UART interface module
+
+POWER
+- 6x Li-ion battery packs (3.7V nominal, flat pouch style)
+- BMS (Battery Management System, 6S or modular parallel setup)
+- DC-DC converters:
+  - 24V rail (actuators)
+  - 12V rail (pump, peripherals)
+  - 5V rail (logic)
+
+ACTUATION (1 LEG)
+- 1x Brushless DC motor (500–1000W peak)
+- Motor driver (FOC capable, e.g., VESC)
+- Harmonic drive or high-ratio gearbox (≥ 50:1)
+- Knee joint bracket (custom or machined)
+
+ENERGY HARVESTING
+- Backdrive-enabled motor (same actuator used regen)
+- Bridge rectifier / regen-compatible controller
+
+MICROFLUIDIC SYSTEM
+- Micro pump (12V, 0.5–1.5 L/min)
+- 2–3 mm ID silicone tubing
+- Small reservoir (100–250 mL)
+- Compact heat exchanger (radiator plate)
+- Dielectric coolant or water-glycol mix
+
+STRUCTURE
+- Kevlar/UHMWPE fabric (spider-silk analog)
+- Aluminum frame pieces (6061-T6)
+- Fasteners (M3/M4 stainless)
+
+SENSORS
+- IMU (MPU-6050 or BNO055)
+- Temperature sensors (DS18B20 or thermistors)
+- Current sensors (INA219 or similar)
+- Optional: flex sensors for joints
+
+SAFETY
+- Inline fuses (each battery segment)
+- Emergency cutoff switch
+- Thermal cutoff (battery + motor)
+
+------------------------------------------------------------
+SECTION 3 — POWER ARCHITECTURE
+------------------------------------------------------------
+
+BATTERY CONFIG:
+- Parallel packs for capacity OR
+- Series (6S) for higher voltage (recommended for motors)
+
+MAIN BUS:
+- Battery → BMS → Main Fuse → Power Distribution
+
+RAILS:
+- 24V → Motor driver
+- 12V → Pump + cooling
+- 5V → Jetson + logic
+
+------------------------------------------------------------
+SECTION 4 — WIRING DIAGRAM (TEXT SCHEMATIC)
+------------------------------------------------------------
+
+[Battery Packs]
+      ↓
+     [BMS]
+      ↓
+   [MAIN FUSE] -----> [EMERGENCY KILL SWITCH]
+      ↓
+   [POWER BUS]
+      ↓
+ ┌───────────────┬───────────────┬───────────────┐
+ ↓               ↓               ↓
+[24V DC-DC]   [12V DC-DC]    [5V DC-DC]
+ ↓               ↓               ↓
+[Motor Driver] [Pump]         [Jetson]
+ ↓                               ↓
+[BLDC Motor]                  [UART/CAN]
+                                  ↓
+                              [STM32]
+                                  ↓
+                   ┌──────────────┴──────────────┐
+                   ↓                             ↓
+                [IMU]                    [Temp Sensors]
+
+REGEN PATH:
+Motor → Motor Driver (regen capable) → Battery bus
+
+------------------------------------------------------------
+SECTION 5 — MICROFLUIDIC LOOP
+------------------------------------------------------------
+
+FLOW:
+
+[Reservoir]
+    ↓
+[Pump]
+    ↓
+[Jetson Heat Plate]
+    ↓
+[Battery Cooling Channels]
+    ↓
+[Back Radiator Plate]
+    ↓
+[Return to Reservoir]
+
+NOTES:
+- Keep tubing short and tight
+- Avoid sharp bends
+- Mount radiator on back (air exposure)
+
+------------------------------------------------------------
+SECTION 6 — MECHANICAL ASSEMBLY
+------------------------------------------------------------
+
+STEP 1 — FRAME
+- Build knee brace frame (thigh + shin segments)
+- Mount hinge aligned with natural knee axis
+
+STEP 2 — MOTOR INSTALL
+- Attach motor to thigh section
+- Connect gearbox → knee joint
+
+STEP 3 — BATTERY PLACEMENT
+- Distribute packs:
+  - 2x chest
+  - 2x back
+  - 2x thighs
+
+STEP 4 — BACK MODULE
+- Mount:
+  - Jetson
+  - Pump
+  - Reservoir
+  - Radiator plate
+
+STEP 5 — FLUID LINES
+- Route tubing along suit interior
+- Secure with clips (no movement)
+
+STEP 6 — WIRING
+- Route power lines along frame
+- Keep signal wires separate from power
+
+STEP 7 — SENSOR MOUNTING
+- IMU on torso centerline
+- Temp sensors on:
+  - Batteries
+  - Motor
+  - Jetson
+
+------------------------------------------------------------
+SECTION 7 — SOFTWARE LOGIC (BASIC)
+------------------------------------------------------------
+
+JETSON:
+- Reads IMU + user motion
+- Sends desired torque commands
+
+STM32:
+- Reads sensors in real time
+- Controls motor driver
+- Enforces limits
+
+CONTROL LOOP:
+
+IF knee flex detected:
+    assist motion (apply torque)
+
+IF braking phase:
+    enable regen → charge battery
+
+IF temperature > threshold:
+    increase pump speed
+
+IF fault:
+    cut motor + alert
+
+------------------------------------------------------------
+SECTION 8 — TESTING SEQUENCE
+------------------------------------------------------------
+
+TEST 1: POWER ONLY
+- Verify voltage rails
+- No load
+
+TEST 2: CONTROL
+- Sensor readings stable
+- IMU calibrated
+
+TEST 3: MOTOR (OFF BODY)
+- Spin motor unloaded
+- Test regen braking
+
+TEST 4: COOLING LOOP
+- Run pump
+- Check for leaks
+
+TEST 5: PARTIAL WEAR
+- Attach to leg only
+- Low torque assist
+
+TEST 6: FULL SYSTEM
+- Gradual load increase
+- Monitor temps + current
+
+------------------------------------------------------------
+SECTION 9 — DO NOT DO (CRITICAL)
+------------------------------------------------------------
+
+- Do NOT mount flywheel in V1
+- Do NOT exceed motor current limits
+- Do NOT run without BMS
+- Do NOT ignore heat buildup
+- Do NOT test at full power immediately
+
+------------------------------------------------------------
+SECTION 10 — UPGRADE PATH (V2)
+------------------------------------------------------------
+
+- Replace STM32 → FPGA
+- Add second leg actuator
+- Integrate flywheel (Orbital Nexus)
+- Expand fluid network
+- Add full-body mesh integration
+
+------------------------------------------------------------
+END OF FILE
+============================================================
