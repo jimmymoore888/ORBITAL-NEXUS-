@@ -1,0 +1,409 @@
+============================================================
+MANDATE ORBITAL NEXUS (ONX-1)
+EMBEDDED COMPUTE + CONTROL SYSTEM SPEC (PRODUCTION FILE)
+FOR FIRST 1000 UNITS
+============================================================
+
+STATUS:
+This document defines the complete embedded compute, control,
+communication, and software architecture for ONX-1.
+
+PRINCIPLE:
+- Deterministic control (safety-critical)
+- Adaptive intelligence (AI-assisted)
+- Modular + scalable architecture
+- Production-ready repeatability
+
+============================================================
+SECTION 1 — SYSTEM ARCHITECTURE
+============================================================
+
+ONX-1 uses a DUAL-LAYER COMPUTE MODEL:
+
+LAYER 1 — REAL-TIME CONTROL (MCU)
+- Deterministic execution
+- <1 ms jitter requirement
+- Direct actuator + sensor control
+
+LAYER 2 — HIGH-LEVEL COMPUTE (AI)
+- Sensor fusion (EKF)
+- Vision processing
+- Gait + terrain logic
+
+SEPARATION RULE:
+“Reflexes stay on MCU. Decisions live on AI.”
+
+============================================================
+SECTION 2 — PRIMARY COMPUTE (AI LAYER)
+============================================================
+
+MODULE:
+- NVIDIA Jetson Orin Nano (8GB)
+
+ROLE:
+- Central processing unit
+- Runs Linux-based AI stack
+
+FUNCTIONS:
+- EKF sensor fusion
+- Terrain classification (CNN)
+- Gait phase detection
+- Motion intent estimation
+
+INTERFACES:
+- CSI (camera)
+- UART (MCU communication)
+- CAN (optional backbone)
+- I2C / SPI (sensor bridge)
+
+PERFORMANCE:
+- ~40 TOPS AI compute
+- GPU accelerated inference
+
+POWER:
+- 5V regulated input
+- Peak draw: ~15W
+
+COOLING:
+- Active heatsink (fan)
+- Integrated into torso cooling loop
+
+============================================================
+SECTION 3 — REAL-TIME CONTROL UNIT
+============================================================
+
+MCU:
+- STM32H7 Series (400–480 MHz)
+
+ROLE:
+- Hard real-time control layer
+
+RESPONSIBILITIES:
+- Motor control loops (≥1 kHz)
+- Encoder reading
+- IMU polling (fast path)
+- Safety monitoring
+- Emergency shutdown execution
+
+CONTROL METHODS:
+- PID / torque control
+- Feedforward compensation
+
+EXECUTION ENVIRONMENT:
+- Bare-metal or FreeRTOS
+
+CRITICAL RULE:
+NO actuator is directly controlled by Jetson
+
+============================================================
+SECTION 4 — COMMUNICATION ARCHITECTURE
+============================================================
+
+PRIMARY BUS:
+- CAN Bus (recommended system backbone)
+
+SECONDARY LINKS:
+- UART (Jetson ↔ MCU)
+- SPI (high-speed sensors)
+- I2C (low-speed peripherals)
+
+DATA FLOW:
+
+SENSORS → MCU → Jetson
+Jetson → MCU → ACTUATORS
+
+MESSAGE TYPES:
+
+1. STATE PACKET (MCU → Jetson)
+   - Joint angles
+   - IMU data
+   - Foot pressure
+   - System health
+
+2. COMMAND PACKET (Jetson → MCU)
+   - Target torque
+   - Gait phase
+   - Mode state
+
+3. SAFETY PACKET (MCU internal)
+   - Overcurrent
+   - Overheat
+   - Fault flags
+
+============================================================
+SECTION 5 — SENSOR FUSION (EKF)
+============================================================
+
+INPUTS:
+- IMUs (helmet, torso, legs)
+- Joint encoders
+- Foot pressure (FSR arrays)
+
+METHOD:
+- Extended Kalman Filter (EKF)
+
+STATE VECTOR:
+- Position (x, y, z)
+- Velocity
+- Orientation (quaternion)
+- Joint states
+
+OUTPUT:
+- Full-body pose estimation
+- Stability vector
+- Gait phase
+
+EXECUTION:
+- Runs on Jetson
+- Update rate: 100–200 Hz
+
+============================================================
+SECTION 6 — VISION + TERRAIN SYSTEM
+============================================================
+
+CAMERA:
+- CSI low-latency camera module
+
+MODEL:
+- Lightweight CNN (TensorRT optimized)
+
+INPUT:
+- Real-time video stream
+
+OUTPUT CLASSES:
+- Flat ground
+- Incline
+- Decline
+- Stairs
+- Uneven terrain
+- Obstacle
+
+RESPONSE:
+- Adjust step height
+- Modify torque profile
+- Shift balance bias
+
+LATENCY TARGET:
+- <50 ms inference
+
+============================================================
+SECTION 7 — CONTROL LOOP SPEC
+============================================================
+
+MCU LOOP FREQUENCY:
+- 1000 Hz (minimum)
+
+LOOP STEPS:
+
+1. Read sensors
+   - Encoder
+   - IMU (fast path)
+
+2. Compute control
+   - PID / torque
+
+3. Apply actuator command
+
+4. Check safety conditions
+
+5. Send state packet to Jetson
+
+JETSON LOOP:
+- 100–200 Hz
+
+JETSON STEPS:
+
+1. Receive state data
+2. Run EKF
+3. Run terrain model
+4. Compute desired motion targets
+5. Send command packet
+
+============================================================
+SECTION 8 — POWER ARCHITECTURE
+============================================================
+
+INPUT:
+- Battery pack (500–1000Wh Li-ion)
+
+RAILS:
+
+HIGH VOLTAGE:
+- Motors (direct supply)
+
+MID VOLTAGE:
+- 12V rail (cooling, peripherals)
+
+LOW VOLTAGE:
+- 5V (Jetson)
+- 3.3V (sensors, MCU)
+
+REQUIREMENTS:
+- Isolated rails (compute vs motors)
+- EMI filtering mandatory
+
+============================================================
+SECTION 9 — SAFETY SYSTEM
+============================================================
+
+MANDATORY:
+
+1. HARDWARE E-STOP
+   - Cuts motor power immediately
+
+2. WATCHDOG TIMER
+   - MCU reset on failure
+
+3. FAULT DETECTION:
+   - Overcurrent
+   - Overheat
+   - Sensor failure
+   - Communication loss
+
+FAIL MODE:
+- Immediate actuator disengagement
+- Controlled system shutdown
+
+============================================================
+SECTION 10 — SOFTWARE STACK
+============================================================
+
+JETSON:
+
+OS:
+- Ubuntu (Jetson Linux)
+
+LIBRARIES:
+- CUDA
+- TensorRT
+- Optional: ROS2
+
+FUNCTIONS:
+- EKF
+- Vision inference
+- High-level control
+
+MCU:
+
+ENVIRONMENT:
+- Bare-metal or FreeRTOS
+
+MODULES:
+- Motor driver
+- Sensor interface
+- Safety manager
+- Communication handler
+
+============================================================
+SECTION 11 — THERMAL MANAGEMENT
+============================================================
+
+JETSON:
+- Active heatsink + airflow
+
+SYSTEM:
+- Integrated microfluidic cooling loop
+
+LIMIT:
+- Maintain <80°C sustained operation
+
+SENSORS:
+- Temperature monitoring at:
+  - CPU
+  - Battery
+  - Motors
+
+============================================================
+SECTION 12 — INTEGRATION + MOUNTING
+============================================================
+
+JETSON:
+- Shock-isolated mount
+- EMI shielded enclosure
+
+MCU:
+- Separate control board
+- Positioned near actuator routing
+
+WIRING:
+- Segregated harness:
+  - Power lines
+  - Signal lines
+  - High-current motor lines
+
+============================================================
+SECTION 13 — CALIBRATION + FLASHING
+============================================================
+
+ASSEMBLY STEPS:
+
+1. Flash STM32 firmware
+2. Install Jetson OS image
+3. Load:
+   - EKF parameters
+   - Vision model
+4. Establish MCU ↔ Jetson link
+5. Perform handshake validation
+
+============================================================
+SECTION 14 — TESTING PROTOCOL (COMPUTE)
+============================================================
+
+TEST 1:
+- Boot validation (Jetson + MCU)
+
+TEST 2:
+- Communication integrity
+
+TEST 3:
+- Sensor stream validation
+
+TEST 4:
+- Control loop stability (no load)
+
+TEST 5:
+- AI inference validation
+
+TEST 6:
+- Full system integration
+
+ALL TESTS MUST PASS
+
+============================================================
+SECTION 15 — SCALABILITY PATH
+============================================================
+
+ONX-1 → FOUNDATION PLATFORM
+
+FUTURE:
+
+ONX-2:
+- Multi-camera fusion
+- Improved autonomy
+
+ONX-PRIME:
+- Cloud-assisted learning
+- Fleet intelligence
+
+ONX-CORE:
+- Industrial simplified variant
+
+============================================================
+FINAL SYSTEM STATEMENT
+============================================================
+
+ONX-1 is a distributed cyber-physical system built on:
+
+- Deterministic real-time control (MCU layer)
+- Adaptive intelligence (AI compute layer)
+- Modular communication architecture
+- Safety-first design principles
+
+This is not a single embedded system.
+
+This is a scalable compute architecture for a full-body
+adaptive exosuit platform.
+
+============================================================
+END FILE
+============================================================
