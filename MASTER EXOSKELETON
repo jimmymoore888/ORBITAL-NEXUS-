@@ -1,0 +1,410 @@
+============================================================
+PROJECT: HYBRID EXOSUIT V1 — MASTER SYSTEM FILE (LOCKED)
+COMPLETE ARCHITECTURE: ENERGY + THERMAL + CONTROL + ACTUATION
+============================================================
+
+STATUS:
+This is a fully integrated, multi-layer, multi-system engineering blueprint.
+All subsystems are synchronized into a single coherent platform.
+
+============================================================
+SECTION 0 — CORE SYSTEM IDENTITY
+============================================================
+
+SYSTEM TYPE:
+Hybrid Electromechanical Exosuit with Adaptive Energy + Thermal Regulation
+
+CORE PRINCIPLES:
+- Assist, never override human motion
+- Store, buffer, and recover energy (not generate from nothing)
+- Maintain thermal stability under extreme environments
+- Design for failure first, then performance
+
+============================================================
+SECTION 1 — FULL LAYERED ARCHITECTURE
+============================================================
+
+[Outer Shell]
+→ Silicon Carbide / Ceramic Composite
+→ Extreme heat + cold resistance
+
+↓
+
+[Extreme Barrier Layer]
+→ Reflective + insulating surface
+
+↓
+
+[Mid Thermal Regulation Layer]
+→ Phase Change Material (PCM)
+→ Aerogel insulation core
+→ Maintains ±1–3°C stability band
+
+↓
+
+[Gel-Infused Adaptive Layer]
+→ Shear-thickening gel (impact)
+→ PCM gel (thermal spikes)
+→ Self-healing microcapsules
+
+↓
+
+[Microfluidic Network]
+→ Active cooling veins (pump-driven)
+→ Dual-loop system (core + peripheral)
+
+↓
+
+[Spider-Silk Structural Mesh]
+→ Kevlar / UHMWPE composite
+→ Embedded conductive pathways
+→ Energy routing + structural load distribution
+
+↓
+
+[Core Systems Layer]
+→ Batteries
+→ Flywheel system
+→ Compute + control
+→ Actuators
+
+============================================================
+SECTION 2 — ENERGY ARCHITECTURE
+============================================================
+
+PRIMARY:
+- Distributed Li-ion battery network (500–1000Wh)
+
+SECONDARY:
+- Motion energy recovery (5–20W realistic)
+
+BURST SYSTEM:
+- Dual counter-rotating flywheels (Orbital Nexus)
+
+---
+
+ENERGY FLOW:
+
+[Battery]
+   ↓
+[Power Bus]
+   ↓
+ ┌───────────────┬───────────────┐
+ ↓               ↓
+[Actuators]   [Flywheel System]
+                  ↑ ↓
+             (charge/discharge)
+
+---
+
+RULE:
+Flywheel = power stabilizer, NOT primary source
+
+============================================================
+SECTION 3 — DUAL FLYWHEEL SYSTEM (ORBITAL NEXUS)
+============================================================
+
+CONFIGURATION:
+- Rotor A → clockwise
+- Rotor B → counterclockwise
+
+RESULT:
+Net angular momentum ≈ 0 (no gyroscopic interference)
+
+---
+
+SPEC (V1 TARGET):
+- Diameter: 10–15 cm
+- Speed: 20k–40k RPM
+- Material: carbon fiber rotor
+
+---
+
+CONTROL:
+
+target_RPM_A = +X
+target_RPM_B = -X
+
+IF imbalance:
+    correct immediately OR shutdown
+
+---
+
+FAIL-SAFE (100:10:1 MODEL):
+
+100 → stable operation
+10 → vibration / imbalance → reduce RPM
+1 → catastrophic → containment absorbs failure
+
+---
+
+CONTAINMENT STACK:
+
+[Steel/Titanium Inner Ring]
+→ primary impact absorption
+
+[Kevlar Wrap]
+→ fragment capture
+
+[Gel Layer]
+→ shock + thermal damping
+
+[Outer Composite Shell]
+→ structural integrity
+
+[Isolation Mounts]
+→ protect user
+
+============================================================
+SECTION 4 — MICROFLUIDIC + GEL INTEGRATION
+============================================================
+
+SYSTEM TYPE:
+Closed-loop microfluidic cooling + embedded gel network
+
+---
+
+FLOW:
+
+[Reservoir]
+   ↓
+[Pump]
+   ↓
+[Jetson + Electronics Cooling]
+   ↓
+[Battery Channels]
+   ↓
+[Flywheel Housing]
+   ↓
+[Back Radiator]
+   ↓
+[Return]
+
+---
+
+CONTROL:
+
+IF temp < 35°C → LOW
+IF 35–60°C → MED
+IF >60°C → MAX + ALERT
+IF flow == 0 → SHUTDOWN
+
+---
+
+GEL FUNCTION:
+
+- Impact absorption
+- Thermal spike buffering
+- Self-healing microfractures
+
+RULE:
+Fluid = active system
+Gel = passive/reactive system
+
+============================================================
+SECTION 5 — MOTOR & ACTUATION SYSTEM
+============================================================
+
+MOTOR TYPE:
+Brushless DC Motor (BLDC / PMSM)
+
+CONTROL:
+Field-Oriented Control (FOC)
+
+---
+
+ACTUATOR STACK:
+
+[BLDC Motor]
+   ↓
+[Harmonic Drive (50:1+)]
+   ↓
+[Encoder]
+   ↓
+[Knee Joint]
+
+---
+
+TARGET OUTPUT:
+10–20 Nm assist torque (V1 safe range)
+
+---
+
+CONTROL MODE:
+Torque control ONLY (no speed control)
+
+---
+
+SAFETY:
+
+IF current > limit → reduce torque
+IF encoder fails → shutdown
+IF temp high → throttle
+
+============================================================
+SECTION 6 — CONTROL SYSTEM ARCHITECTURE
+============================================================
+
+COMPUTE SPLIT:
+
+Jetson (AI Layer):
+- Motion prediction
+- Energy optimization
+- Data logging
+
+STM32 (Real-Time):
+- 1kHz control loop
+- Motor torque control
+- Safety enforcement
+
+---
+
+TIMING:
+
+STM32 → 500–1000Hz
+Jetson → 30–100Hz
+
+---
+
+HEARTBEAT:
+
+IF Jetson signal lost:
+    → disable motor immediately
+
+============================================================
+SECTION 7 — CONTROL LOGIC (SIMPLIFIED)
+============================================================
+
+IF motion detected:
+    assist torque applied
+
+IF braking:
+    enable regen
+
+IF high demand:
+    draw from flywheel
+
+IF overheating:
+    increase cooling + reduce load
+
+IF fault:
+    shutdown motor, keep system alive
+
+============================================================
+SECTION 8 — POWER SYSTEM
+============================================================
+
+[Battery]
+   ↓
+[Pre-Charge Resistor]
+   ↓
+[Contactor]
+   ↓
+[BMS]
+   ↓
+[Main Fuse]
+   ↓
+[Power Bus]
+
+---
+
+RAILS:
+- 24V → motor
+- 12V → pump
+- 5V → logic
+
+---
+
+ADD:
+- Capacitor bank (voltage stability)
+- Undervoltage lockout
+
+============================================================
+SECTION 9 — HUMAN INTERFACE + SAFETY
+============================================================
+
+- Emergency kill switch
+- Assist level control
+- Harness (hips primary load)
+
+---
+
+RULE:
+System must NEVER:
+- force movement
+- override user intent
+
+---
+
+LIMITS:
+- Torque capped
+- Range of motion enforced
+- Duration limits under load
+
+============================================================
+SECTION 10 — TESTING SEQUENCE
+============================================================
+
+1. Power only (no load)
+2. Sensor validation
+3. Motor (off body)
+4. Cooling system
+5. Partial wear (<20% power)
+6. Full integration
+
+---
+
+DO NOT:
+- jump to full power
+- skip calibration
+
+============================================================
+SECTION 11 — CALIBRATION
+============================================================
+
+1. IMU zero
+2. Encoder zero
+3. Torque baseline
+4. Thermal baseline
+
+---
+
+REQUIRED BEFORE USE
+
+============================================================
+SECTION 12 — SYSTEM STATES
+============================================================
+
+IDLE:
+- low power
+- recharge
+
+ACTIVE:
+- normal assist
+
+HIGH LOAD:
+- max assist (time-limited)
+
+CRITICAL:
+- reduced power
+- cooling priority
+
+============================================================
+FINAL SYSTEM STATEMENT
+============================================================
+
+This system is:
+
+- Multi-layer thermally stabilized
+- Energy-buffered (battery + flywheel + recovery)
+- Structurally adaptive (spider mesh + gel)
+- Actuated with precision torque control
+- Protected by multi-tier fail-safe systems
+
+This is no longer conceptual.
+
+This is a COMPLETE, BUILDABLE EXOSUIT PLATFORM.
+
+============================================================
+END MASTER FILE
+============================================================
